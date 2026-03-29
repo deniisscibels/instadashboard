@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   Eye, Heart, MessageCircle, Share2, Bookmark, TrendingUp,
-  Film, Users, Camera, PenSquare, Upload,
+  Film, Users, Camera, PenSquare, Upload, Link2,
 } from "lucide-react";
 import StatCard from "./components/StatCard";
 import ReelsChart from "./components/ReelsChart";
@@ -15,6 +15,7 @@ import ActiveHoursChart from "./components/ActiveHoursChart";
 import FollowerGrowthChart from "./components/FollowerGrowthChart";
 import DataInput from "./components/DataInput";
 import InstagramImport from "./components/InstagramImport";
+import ReelLink from "./components/ReelLink";
 import { reelsOverview as defaultOverview } from "./data/mockData";
 
 function loadUserData() {
@@ -39,7 +40,8 @@ function computeOverview(reels) {
 const tabs = [
   { id: "reels", label: "Reels", icon: Film },
   { id: "audience", label: "Аудитория", icon: Users },
-  { id: "import", label: "Импорт", icon: Upload },
+  { id: "link", label: "По ссылке", icon: Link2 },
+  { id: "import", label: "Импорт ZIP", icon: Upload },
   { id: "input", label: "Мои данные", icon: PenSquare },
 ];
 
@@ -131,6 +133,10 @@ function App() {
               <ActiveHoursChart />
             </div>
           </>
+        )}
+
+        {activeTab === "link" && (
+          <ReelLink onAddReels={(reels) => handleSave({ reels, demographics: userData?.demographics })} />
         )}
 
         {activeTab === "import" && (
