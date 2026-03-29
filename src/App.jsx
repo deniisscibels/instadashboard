@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   Eye, Heart, MessageCircle, Share2, Bookmark, TrendingUp,
-  Film, Users, Camera, PenSquare, Upload, Link2,
+  Film, Users, Camera, PenSquare, Upload, Link2, Trophy,
 } from "lucide-react";
 import StatCard from "./components/StatCard";
 import ReelsChart from "./components/ReelsChart";
@@ -16,6 +16,10 @@ import FollowerGrowthChart from "./components/FollowerGrowthChart";
 import DataInput from "./components/DataInput";
 import InstagramImport from "./components/InstagramImport";
 import ReelLink from "./components/ReelLink";
+import Leaderboard from "./components/Leaderboard";
+import ProfileSetup from "./components/ProfileSetup";
+import AuthButton from "./components/AuthButton";
+import useAuth from "./useAuth";
 import { reelsOverview as defaultOverview } from "./data/mockData";
 
 function loadUserData() {
@@ -41,14 +45,16 @@ function computeOverview(reels) {
 const tabs = [
   { id: "reels", label: "Reels", icon: Film },
   { id: "audience", label: "Аудитория", icon: Users },
+  { id: "leaderboard", label: "Лидерборд", icon: Trophy },
   { id: "link", label: "По ссылке", icon: Link2 },
-  { id: "import", label: "Импорт ZIP", icon: Upload },
-  { id: "input", label: "Мои данные", icon: PenSquare },
+  { id: "import", label: "Импорт", icon: Upload },
+  { id: "input", label: "Данные", icon: PenSquare },
 ];
 
 function App() {
   const [activeTab, setActiveTab] = useState("reels");
   const [userData, setUserData] = useState(loadUserData);
+  const { user, loading: authLoading, login, logout } = useAuth();
 
   const handleSave = useCallback((data) => {
     setUserData(data);
@@ -75,21 +81,30 @@ function App() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a2e] rounded-xl p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-gradient-to-r from-[#E1306C] to-[#833AB4] text-white shadow-lg shadow-[#E1306C]/20"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
+
+          <div className="flex items-center gap-4">
+            {/* Nav tabs — scrollable on mobile */}
+            <div className="flex items-center gap-1 bg-[#1a1a2e] rounded-xl p-1 overflow-x-auto max-w-[55vw] sm:max-w-none">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-gradient-to-r from-[#E1306C] to-[#833AB4] text-white shadow-lg shadow-[#E1306C]/20"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <tab.icon size={14} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Auth */}
+            {!authLoading && (
+              <AuthButton user={user} onLogin={login} onLogout={logout} />
+            )}
           </div>
         </div>
       </header>
@@ -106,14 +121,11 @@ function App() {
               <StatCard icon={<Bookmark size={20} />} label="Сохранения" value={overview.totalSaves} gradient="radial-gradient(circle, #5B51D8, transparent)" />
               <StatCard icon={<TrendingUp size={20} />} label="Engagement" value={overview.avgEngagementRate} suffix="%" gradient="radial-gradient(circle, #17bf63, transparent)" />
             </div>
-
             <ReelsChart userData={hasUserData ? userData.reels : null} />
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <RetentionChart />
               <ReachSourcesChart />
             </div>
-
             <TopReels userData={hasUserData ? userData.reels : null} />
           </>
         )}
@@ -121,18 +133,30 @@ function App() {
         {activeTab === "audience" && (
           <>
             <FollowerGrowthChart />
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <AgeGenderChart userData={hasUserData ? userData.demographics : null} />
               </div>
               <GenderPie userData={hasUserData ? userData.demographics : null} />
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GeoTable userData={hasUserData ? userData.demographics : null} />
               <ActiveHoursChart />
             </div>
+          </>
+        )}
+
+        {activeTab === "leaderboard" && (
+          <>
+            {user && <ProfileSetup user={user} userData={userData} />}
+            {!user && (
+              <div className="rounded-2xl bg-[#1a1a2e] border border-[#2a2a4a] p-8 text-center">
+                <Trophy size={48} className="text-[#FCAF45] mx-auto mb-4" />
+                <h3 className="text-white text-lg font-semibold mb-2">Войди чтобы участвовать</h3>
+                <p className="text-gray-400 text-sm mb-6">Нажми "Войти через Google" в правом верхнем углу</p>
+              </div>
+            )}
+            <Leaderboard currentUid={user?.uid} />
           </>
         )}
 
