@@ -1,5 +1,5 @@
 import { Eye, Heart, MessageCircle, Share2 } from "lucide-react";
-import { topReels } from "../data/mockData";
+import { topReels as defaultReels } from "../data/mockData";
 
 function formatNum(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
@@ -7,12 +7,28 @@ function formatNum(n) {
   return n;
 }
 
-export default function TopReels() {
+export default function TopReels({ userData }) {
+  const reels = userData
+    ? userData
+        .filter((r) => r.views)
+        .map((r, i) => ({
+          id: i,
+          title: r.title || `Reel #${i + 1}`,
+          views: Number(r.views) || 0,
+          likes: Number(r.likes) || 0,
+          comments: Number(r.comments) || 0,
+          shares: Number(r.shares) || 0,
+          date: r.date ? new Date(r.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : "",
+        }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10)
+    : defaultReels;
+
   return (
     <div className="rounded-2xl bg-[#1a1a2e] border border-[#2a2a4a] p-6">
       <h3 className="text-lg font-semibold text-white mb-6">Топ Reels</h3>
       <div className="space-y-3">
-        {topReels.map((reel, i) => (
+        {reels.map((reel, i) => (
           <div
             key={reel.id}
             className="flex items-center gap-4 p-4 rounded-xl bg-[#12122a] hover:bg-[#1e1e3a] transition-colors"
@@ -29,10 +45,6 @@ export default function TopReels() {
               <span className="flex items-center gap-1"><Heart size={14} /> {formatNum(reel.likes)}</span>
               <span className="flex items-center gap-1"><MessageCircle size={14} /> {formatNum(reel.comments)}</span>
               <span className="flex items-center gap-1"><Share2 size={14} /> {formatNum(reel.shares)}</span>
-            </div>
-            <div className="text-right shrink-0">
-              <span className="text-sm font-semibold text-[#833AB4]">{reel.retention}%</span>
-              <p className="text-xs text-gray-500">удержание</p>
             </div>
           </div>
         ))}

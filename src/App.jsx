@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Eye, Heart, MessageCircle, Share2, Bookmark, TrendingUp,
-  Film, Users, BarChart3, Camera,
+  Film, Users, Camera, PenSquare,
 } from "lucide-react";
 import StatCard from "./components/StatCard";
 import ReelsChart from "./components/ReelsChart";
@@ -13,15 +13,44 @@ import GenderPie from "./components/GenderPie";
 import GeoTable from "./components/GeoTable";
 import ActiveHoursChart from "./components/ActiveHoursChart";
 import FollowerGrowthChart from "./components/FollowerGrowthChart";
-import { reelsOverview } from "./data/mockData";
+import DataInput from "./components/DataInput";
+import { reelsOverview as defaultOverview } from "./data/mockData";
+
+function loadUserData() {
+  try {
+    const reels = JSON.parse(localStorage.getItem("ig_reels"));
+    const demo = JSON.parse(localStorage.getItem("ig_demographics"));
+    if (reels?.length && reels[0].views) return { reels, demographics: demo };
+  } catch {}
+  return null;
+}
+
+function computeOverview(reels) {
+  const totalViews = reels.reduce((s, r) => s + (Number(r.views) || 0), 0);
+  const totalLikes = reels.reduce((s, r) => s + (Number(r.likes) || 0), 0);
+  const totalComments = reels.reduce((s, r) => s + (Number(r.comments) || 0), 0);
+  const totalShares = reels.reduce((s, r) => s + (Number(r.shares) || 0), 0);
+  const totalSaves = reels.reduce((s, r) => s + (Number(r.saves) || 0), 0);
+  const engagement = totalViews > 0 ? (((totalLikes + totalComments + totalShares + totalSaves) / totalViews) * 100) : 0;
+  return { totalViews, totalLikes, totalComments, totalShares, totalSaves, avgEngagementRate: Math.round(engagement * 10) / 10 };
+}
 
 const tabs = [
   { id: "reels", label: "Reels", icon: Film },
   { id: "audience", label: "Аудитория", icon: Users },
+  { id: "input", label: "Мои данные", icon: PenSquare },
 ];
 
 function App() {
   const [activeTab, setActiveTab] = useState("reels");
+  const [userData, setUserData] = useState(loadUserData);
+
+  const handleSave = useCallback((data) => {
+    setUserData(data);
+  }, []);
+
+  const hasUserData = userData?.reels?.length > 0 && userData.reels[0].views;
+  const overview = hasUserData ? computeOverview(userData.reels) : defaultOverview;
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
@@ -36,7 +65,9 @@ function App() {
               <h1 className="text-xl font-bold bg-gradient-to-r from-[#F77737] via-[#E1306C] to-[#833AB4] bg-clip-text text-transparent">
                 InstaDashboard
               </h1>
-              <p className="text-xs text-gray-500">Аналитика аккаунта</p>
+              <p className="text-xs text-gray-500">
+                {hasUserData ? "Твои данные" : "Демо данные"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 bg-[#1a1a2e] rounded-xl p-1">
@@ -62,55 +93,51 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {activeTab === "reels" && (
           <>
-            {/* Stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <StatCard icon={<Eye size={20} />} label="Просмотры" value={reelsOverview.totalViews} />
-              <StatCard icon={<Heart size={20} />} label="Лайки" value={reelsOverview.totalLikes} gradient="radial-gradient(circle, #833AB4, transparent)" />
-              <StatCard icon={<MessageCircle size={20} />} label="Комментарии" value={reelsOverview.totalComments} gradient="radial-gradient(circle, #F77737, transparent)" />
-              <StatCard icon={<Share2 size={20} />} label="Репосты" value={reelsOverview.totalShares} gradient="radial-gradient(circle, #FCAF45, transparent)" />
-              <StatCard icon={<Bookmark size={20} />} label="Сохранения" value={reelsOverview.totalSaves} gradient="radial-gradient(circle, #5B51D8, transparent)" />
-              <StatCard icon={<TrendingUp size={20} />} label="Engagement" value={reelsOverview.avgEngagementRate} suffix="%" gradient="radial-gradient(circle, #17bf63, transparent)" />
+              <StatCard icon={<Eye size={20} />} label="Просмотры" value={overview.totalViews} />
+              <StatCard icon={<Heart size={20} />} label="Лайки" value={overview.totalLikes} gradient="radial-gradient(circle, #833AB4, transparent)" />
+              <StatCard icon={<MessageCircle size={20} />} label="Комментарии" value={overview.totalComments} gradient="radial-gradient(circle, #F77737, transparent)" />
+              <StatCard icon={<Share2 size={20} />} label="Репосты" value={overview.totalShares} gradient="radial-gradient(circle, #FCAF45, transparent)" />
+              <StatCard icon={<Bookmark size={20} />} label="Сохранения" value={overview.totalSaves} gradient="radial-gradient(circle, #5B51D8, transparent)" />
+              <StatCard icon={<TrendingUp size={20} />} label="Engagement" value={overview.avgEngagementRate} suffix="%" gradient="radial-gradient(circle, #17bf63, transparent)" />
             </div>
 
-            {/* Main chart */}
-            <ReelsChart />
+            <ReelsChart userData={hasUserData ? userData.reels : null} />
 
-            {/* Retention + Sources */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <RetentionChart />
               <ReachSourcesChart />
             </div>
 
-            {/* Top reels */}
-            <TopReels />
+            <TopReels userData={hasUserData ? userData.reels : null} />
           </>
         )}
 
         {activeTab === "audience" && (
           <>
-            {/* Follower growth */}
             <FollowerGrowthChart />
 
-            {/* Age + Gender */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <AgeGenderChart />
+                <AgeGenderChart userData={hasUserData ? userData.demographics : null} />
               </div>
-              <GenderPie />
+              <GenderPie userData={hasUserData ? userData.demographics : null} />
             </div>
 
-            {/* Geo + Active hours */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GeoTable />
+              <GeoTable userData={hasUserData ? userData.demographics : null} />
               <ActiveHoursChart />
             </div>
           </>
         )}
+
+        {activeTab === "input" && (
+          <DataInput onSave={handleSave} />
+        )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-[#2a2a4a] py-6 text-center text-sm text-gray-600">
-        InstaDashboard &mdash; Mock data for demonstration
+        InstaDashboard {hasUserData ? "" : "— Демо данные"}
       </footer>
     </div>
   );

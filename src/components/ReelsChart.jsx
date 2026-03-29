@@ -17,12 +17,24 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function ReelsChart() {
+export default function ReelsChart({ userData }) {
+  const data = userData
+    ? userData
+        .filter((r) => r.views && r.date)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map((r) => ({
+          name: new Date(r.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
+          views: Number(r.views) || 0,
+          likes: Number(r.likes) || 0,
+          shares: Number(r.shares) || 0,
+        }))
+    : reelsPerformance;
+
   return (
     <div className="rounded-2xl bg-[#1a1a2e] border border-[#2a2a4a] p-6">
       <h3 className="text-lg font-semibold text-white mb-6">Динамика Reels</h3>
       <ResponsiveContainer width="100%" height={320}>
-        <AreaChart data={reelsPerformance}>
+        <AreaChart data={data}>
           <defs>
             <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#E1306C" stopOpacity={0.3} />

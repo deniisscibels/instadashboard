@@ -1,10 +1,18 @@
-import { topCities, topCountries } from "../data/mockData";
+import { topCities as defaultCities, topCountries as defaultCountries } from "../data/mockData";
 import { useState } from "react";
 
-export default function GeoTable() {
+export default function GeoTable({ userData }) {
   const [tab, setTab] = useState("countries");
 
-  const data = tab === "countries" ? topCountries : topCities;
+  const countries = userData?.countries?.length > 0 && userData.countries[0].name
+    ? userData.countries.map((c) => ({ country: c.name, percentage: Number(c.percentage) || 0, flag: "" }))
+    : defaultCountries;
+
+  const cities = userData?.cities?.length > 0 && userData.cities[0].name
+    ? userData.cities.map((c) => ({ city: c.name, percentage: Number(c.percentage) || 0 }))
+    : defaultCities;
+
+  const data = tab === "countries" ? countries : cities;
   const maxVal = data[0]?.percentage || 1;
 
   return (
@@ -32,7 +40,7 @@ export default function GeoTable() {
       </div>
       <div className="space-y-3">
         {data.map((item) => {
-          const label = tab === "countries" ? `${item.flag} ${item.country}` : item.city;
+          const label = tab === "countries" ? `${item.flag ? item.flag + " " : ""}${item.country}` : item.city;
           return (
             <div key={label}>
               <div className="flex justify-between text-sm mb-1">
