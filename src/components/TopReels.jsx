@@ -10,7 +10,6 @@ function formatNum(n) {
 export default function TopReels({ userData }) {
   const reels = userData
     ? userData
-        .filter((r) => r.views)
         .map((r, i) => ({
           id: i,
           title: r.title || `Reel #${i + 1}`,
@@ -20,7 +19,7 @@ export default function TopReels({ userData }) {
           shares: Number(r.shares) || 0,
           date: r.date ? new Date(r.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : "",
         }))
-        .sort((a, b) => b.views - a.views)
+        .sort((a, b) => (b.views || b.likes) - (a.views || a.likes))
         .slice(0, 10)
     : defaultReels;
 

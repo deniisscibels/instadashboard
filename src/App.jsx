@@ -22,7 +22,7 @@ function loadUserData() {
   try {
     const reels = JSON.parse(localStorage.getItem("ig_reels"));
     const demo = JSON.parse(localStorage.getItem("ig_demographics"));
-    if (reels?.length && reels[0].views) return { reels, demographics: demo };
+    if (reels?.length) return { reels, demographics: demo };
   } catch {}
   return null;
 }
@@ -33,7 +33,8 @@ function computeOverview(reels) {
   const totalComments = reels.reduce((s, r) => s + (Number(r.comments) || 0), 0);
   const totalShares = reels.reduce((s, r) => s + (Number(r.shares) || 0), 0);
   const totalSaves = reels.reduce((s, r) => s + (Number(r.saves) || 0), 0);
-  const engagement = totalViews > 0 ? (((totalLikes + totalComments + totalShares + totalSaves) / totalViews) * 100) : 0;
+  const total = totalViews || totalLikes || 1;
+  const engagement = ((totalLikes + totalComments + totalShares + totalSaves) / total) * 100;
   return { totalViews, totalLikes, totalComments, totalShares, totalSaves, avgEngagementRate: Math.round(engagement * 10) / 10 };
 }
 
@@ -53,7 +54,7 @@ function App() {
     setUserData(data);
   }, []);
 
-  const hasUserData = userData?.reels?.length > 0 && userData.reels[0].views;
+  const hasUserData = userData?.reels?.length > 0;
   const overview = hasUserData ? computeOverview(userData.reels) : defaultOverview;
 
   return (

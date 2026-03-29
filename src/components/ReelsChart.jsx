@@ -20,7 +20,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function ReelsChart({ userData }) {
   const data = userData
     ? userData
-        .filter((r) => r.views && r.date)
+        .filter((r) => r.date)
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .map((r) => ({
           name: new Date(r.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
